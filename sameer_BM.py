@@ -20,6 +20,13 @@ st.markdown("""
         border-radius: 5px;
         border-left: 5px solid #004b8d;
     }
+    .decision-box {
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        margin-top: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -38,22 +45,30 @@ w_fin, w_ind, w_mgt, w_col, w_str = 0.30, 0.20, 0.15, 0.20, 0.15
 total_score = (score_financial * w_fin) + (score_industry * w_ind) + \
               (score_management * w_mgt) + (score_collateral * w_col) + (score_strategy * w_str)
 
-# Decision Logic
+# Decision Logic & Rationale
 if total_score >= 7.5:
     decision = "APPROVED"
     color = "#28a745" # Green
+    bg_color = "#e8f5e9"
+    rationale = "Proposal meets all risk acceptance criteria."
+    icon = "✅"
 elif total_score >= 5.0:
     decision = "REVIEW / CAUTION"
     color = "#ffc107" # Amber
+    bg_color = "#fff3e0"
+    rationale = "Marginal score; requires additional Collateral or Covenants."
+    icon = "⚠️"
 else:
     decision = "REJECT"
     color = "#dc3545" # Red
+    bg_color = "#ffebee"
+    rationale = "Critical structural mismatch (Unsecured) & rising leverage risks."
+    icon = "❌"
 
 # --- TOP SECTION: LOGOS & TITLE ---
 col_logo1, col_title, col_logo2 = st.columns([1, 4, 1])
 
 with col_logo1:
-    # Bandhan Bank Logo URL
     st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Bandhan_Bank_Logo.svg/1200px-Bandhan_Bank_Logo.svg.png", use_container_width=True)
 
 with col_title:
@@ -61,22 +76,22 @@ with col_title:
     st.markdown("<h4 style='text-align: center;'>Borrower: Jindal Steel & Power (JSPL) | Request: ₹1,415 Cr Unsecured</h4>", unsafe_allow_html=True)
 
 with col_logo2:
-    # JSPL Logo URL (Using a placeholder reliable source or text if image breaks)
     st.image("https://upload.wikimedia.org/wikipedia/commons/2/25/Jindal_Steel_%26_Power_Logo.jpg", use_container_width=True)
 
 st.markdown("---")
 
-# --- SECTION 1: RISK METER (GAUGE) - NOW AT THE TOP ---
-c1, c2, c3 = st.columns([1, 2, 1])
-with c2:
+# --- SECTION 1: SPLIT VIEW (GAUGE LEFT | DECISION RIGHT) ---
+col_left, col_right = st.columns([1, 1.5])
+
+# LEFT SIDE: RISKOMETER (GAUGE)
+with col_left:
     fig_gauge = go.Figure(go.Indicator(
-        mode = "gauge+number+delta",
+        mode = "gauge+number",
         value = total_score,
         domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': f"<b>AI CREDIT SCORE</b><br><span style='color:{color}; font-size:0.8em'>{decision}</span>"},
-        delta = {'reference': 7.5, 'increasing': {'color': "green"}},
+        title = {'text': "<b>AI CREDIT SCORE</b>"},
         gauge = {
-            'axis': {'range': [None, 10], 'tickwidth': 1, 'tickcolor': "darkblue"},
+            'axis': {'range': [None, 10], 'tickwidth': 1},
             'bar': {'color': color},
             'bgcolor': "white",
             'borderwidth': 2,
@@ -87,8 +102,29 @@ with c2:
                 {'range': [7.5, 10], 'color': "#e8f5e9"}],
             'threshold': {'line': {'color': "black", 'width': 4}, 'thickness': 0.75, 'value': 7.5}}))
     
-    fig_gauge.update_layout(height=300, margin=dict(l=20,r=20,t=50,b=20))
+    fig_gauge.update_layout(height=280, margin=dict(l=20,r=20,t=30,b=20))
     st.plotly_chart(fig_gauge, use_container_width=True)
+
+# RIGHT SIDE: DECISION & RATIONALE
+with col_right:
+    # Using HTML/CSS for a clean "Card" look
+    st.markdown(f"""
+    <div style="
+        background-color: {bg_color}; 
+        padding: 30px; 
+        border-radius: 15px; 
+        border: 2px solid {color};
+        text-align: center;
+        margin-top: 20px;">
+        <h2 style="color: {color}; margin:0;">{icon} {decision}</h2>
+        <h1 style="font-size: 3em; margin: 10px 0;">{total_score:.2f} <span style="font-size: 0.4em; color: gray;">/ 10</span></h1>
+        <hr style="border-top: 1px solid {color};">
+        <h4 style="color: #333;">Rationale:</h4>
+        <p style="font-size: 1.2em; font-weight: 500;">{rationale}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("---")
 
 # --- SECTION 2: KEY METRICS ---
 m1, m2, m3, m4 = st.columns(4)
@@ -104,32 +140,27 @@ st.subheader("📈 Quantitative & Strategic Analysis")
 
 g1, g2 = st.columns(2)
 
-# GRAPH 1: Financial Trend (Line Chart)
+# GRAPH 1: Financial Trend
 with g1:
     st.markdown("**1. JSPL Financial Trend: Debt is Rising**")
-    # Mock Data based on report narrative
     data_trend = pd.DataFrame({
         'Year': ['FY23', 'FY24', 'FY25', 'Q2 FY26 (Ann.)'],
         'Net Debt (Cr)': [9500, 10200, 12500, 14156],
         'EBITDA (Cr)': [11000, 12500, 11800, 9500]
     })
-    
     fig_trend = go.Figure()
     fig_trend.add_trace(go.Scatter(x=data_trend['Year'], y=data_trend['Net Debt (Cr)'], name='Net Debt', line=dict(color='red', width=3)))
     fig_trend.add_trace(go.Bar(x=data_trend['Year'], y=data_trend['EBITDA (Cr)'], name='EBITDA', marker_color='#004b8d', opacity=0.6))
     fig_trend.update_layout(barmode='overlay', height=350, legend=dict(orientation="h", y=1.1))
     st.plotly_chart(fig_trend, use_container_width=True)
 
-# GRAPH 2: Peer Comparison (Bar Chart)
+# GRAPH 2: Peer Comparison
 with g2:
     st.markdown("**2. Leverage Comparison (Net Debt/EBITDA)**")
-    # Comparison Data
     data_peer = pd.DataFrame({
         'Company': ['JSPL', 'Tata Steel', 'JSW Steel'],
         'Leverage Ratio': [1.48, 2.50, 2.80],
-        'Color': ['#28a745', 'gray', 'gray'] # Highlight JSPL in Green
     })
-    
     fig_peer = px.bar(data_peer, x='Company', y='Leverage Ratio', color='Company', 
                       color_discrete_map={'JSPL':'#28a745', 'Tata Steel':'#6c757d', 'JSW Steel':'#6c757d'},
                       text='Leverage Ratio')
@@ -139,30 +170,23 @@ with g2:
 
 g3, g4 = st.columns(2)
 
-# GRAPH 3: Radar Chart (Risk Profile)
+# GRAPH 3: Radar Chart
 with g3:
-    st.markdown("**3. Risk Component Analysis (Gap Analysis)**")
+    st.markdown("**3. Risk Component Analysis**")
     categories = ['Financials', 'Industry', 'Management', 'Collateral', 'Strategy']
     values = [score_financial, score_industry, score_management, score_collateral, score_strategy]
     ideal = [8, 8, 8, 10, 8]
-    
     fig_radar = go.Figure()
     fig_radar.add_trace(go.Scatterpolar(r=values, theta=categories, fill='toself', name='Current Proposal', line_color='red'))
     fig_radar.add_trace(go.Scatterpolar(r=ideal, theta=categories, name='Ideal Profile', line_color='green', line_dash='dot'))
     fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 10])), height=350, showlegend=True, legend=dict(orientation="h", y=-0.1))
     st.plotly_chart(fig_radar, use_container_width=True)
 
-# GRAPH 4: Strategic Mismatch (Donut Chart)
+# GRAPH 4: Strategic Mismatch
 with g4:
     st.markdown("**4. Bandhan Bank Strategic Fit**")
-    # Data showing Bandhan's preference
     labels = ['Secured (Target)', 'Unsecured (Avoiding)']
     values = [60, 40] 
-    
     fig_donut = go.Figure(data=[go.Pie(labels=labels, values=values, hole=.6, marker_colors=['#004b8d', '#dc3545'])])
     fig_donut.update_layout(annotations=[dict(text='Bank\nStrategy', x=0.5, y=0.5, font_size=15, showarrow=False)], height=350, showlegend=True)
     st.plotly_chart(fig_donut, use_container_width=True)
-    st.caption("Note: Bandhan Bank is actively reducing Unsecured exposure (Red slice).")
-
-# --- FOOTER ---
-st.info("💡 **Recommendation:** The 'Collateral' score (currently 0) is the primary drag. If the borrower offers fixed assets, the score would move to Green.")
